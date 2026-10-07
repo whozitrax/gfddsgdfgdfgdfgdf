@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b1018" />
+  <title>GiftRelayer</title>
+  <script src="https://telegram.org/js/telegram-web-app.js?64"></script>
+  <style>
+:root {
+  color-scheme: dark;
+  --bg: #090d14;
+  --card: rgba(20, 27, 39, .94);
+  --card-soft: rgba(26, 35, 49, .78);
+  --text: #f6f8fb;
+  --muted: #8f9aac;
+  --line: rgba(255,255,255,.08);
+  --accent: #2aabee;
+  --accent-2: #6dc5ff;
+  --success: #32c46d;
+  --danger: #ff5f62;
+  --safe-top: max(env(safe-area-inset-top), 14px);
+  --safe-bottom: max(env(safe-area-inset-bottom), 18px);
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; background: radial-gradient(circle at 50% -10%, #15283d 0, #0b111b 34%, var(--bg) 70%); font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: var(--text); }
+body { min-height: 100vh; min-height: var(--tg-viewport-stable-height, 100vh); }
+button { font: inherit; }
+.app-shell { width: min(100%, 620px); min-height: 100vh; margin: 0 auto; padding: calc(var(--safe-top) + 8px) 18px var(--safe-bottom); display: flex; flex-direction: column; gap: 18px; }
+.topbar { display: flex; align-items: center; justify-content: space-between; padding: 2px 2px 0; }
+.eyebrow { color: var(--accent-2); font-weight: 800; letter-spacing: .18em; font-size: 11px; }
+h1 { margin: 4px 0 0; font-size: 27px; letter-spacing: -.02em; }
+.icon-button { width: 42px; height: 42px; border: 0; border-radius: 50%; background: rgba(255,255,255,.06); color: var(--muted); font-size: 30px; line-height: 1; }
+.screen-card { position: relative; overflow: hidden; border-radius: 30px; padding: 18px; background: linear-gradient(180deg, rgba(31,43,59,.98), rgba(16,23,34,.96)); border: 1px solid var(--line); box-shadow: 0 24px 70px rgba(0,0,0,.32); }
+.status-pill { width: fit-content; margin: 0 auto 14px; padding: 8px 13px; border-radius: 999px; background: rgba(50,196,109,.12); color: #76e7a3; font-size: 13px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; display: flex; gap: 8px; align-items: center; }
+.status-pill .dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; box-shadow: 0 0 14px currentColor; }
+.gift-stage { position: relative; width: 100%; aspect-ratio: 1.45 / 1; border-radius: 26px; overflow: hidden; display: grid; place-items: center; background: radial-gradient(circle at 50% 40%, rgba(113,194,255,.55), rgba(58,137,203,.28) 44%, rgba(28,55,83,.58) 100%); border: 1px solid rgba(255,255,255,.08); }
+.gift-stage::before, .gift-stage::after { content: ""; position: absolute; width: 70%; height: 180%; border: 1px solid rgba(255,255,255,.2); border-radius: 50%; transform: rotate(28deg); }
+.gift-stage::after { transform: rotate(-32deg); width: 45%; }
+#giftImage { max-width: 68%; max-height: 72%; object-fit: contain; z-index: 2; filter: drop-shadow(0 16px 22px rgba(0,0,0,.32)); animation: floatGift 4s ease-in-out infinite; }
+.gift-fallback { font-size: 92px; z-index: 2; filter: drop-shadow(0 15px 20px rgba(0,0,0,.25)); }
+@keyframes floatGift { 50% { transform: translateY(-7px) scale(1.015); } }
+.gift-meta { text-align: center; padding: 22px 6px 6px; }
+.gift-meta h2 { margin: 0; font-size: 28px; letter-spacing: -.03em; }
+.gift-meta p { margin: 8px 0 0; color: var(--muted); font-size: 15px; line-height: 1.45; }
+.price { margin: 12px 0 6px; font-size: clamp(36px, 9vw, 54px); font-weight: 850; color: var(--accent-2); letter-spacing: -.04em; }
+.timer { display: inline-flex; padding: 9px 13px; border-radius: 14px; background: rgba(255,255,255,.05); color: var(--muted); font-size: 14px; }
+.actions { margin-top: auto; display: grid; gap: 10px; }
+.btn { width: 100%; border: 0; border-radius: 18px; min-height: 58px; padding: 14px 18px; font-weight: 800; font-size: 17px; cursor: pointer; transition: transform .15s ease, opacity .15s ease; }
+.btn:active { transform: scale(.985); }
+.btn:disabled { opacity: .55; cursor: default; }
+.btn-primary { color: white; background: linear-gradient(180deg, #31aef5, #168fe0); box-shadow: 0 12px 24px rgba(20,145,224,.25); }
+.btn-secondary { color: #ff7477; background: rgba(255,255,255,.055); }
+.btn-success { color: white; background: linear-gradient(180deg, #38cf78, #24ad61); }
+.btn-ghost { color: var(--text); background: rgba(255,255,255,.07); }
+.info-box { padding: 14px 16px; border-radius: 18px; background: rgba(255,255,255,.05); border: 1px solid var(--line); color: var(--muted); line-height: 1.45; text-align: left; margin-top: 14px; }
+.info-box strong { color: var(--text); }
+.overlay { position: fixed; inset: 0; z-index: 20; background: rgba(0,0,0,.55); backdrop-filter: blur(8px); display: flex; align-items: flex-end; justify-content: center; animation: fade .18s ease; }
+.sheet { width: min(100%, 620px); border-radius: 28px 28px 0 0; padding: 24px 20px calc(var(--safe-bottom) + 8px); background: #151c26; border: 1px solid var(--line); box-shadow: 0 -24px 60px rgba(0,0,0,.35); animation: rise .24s ease; }
+.sheet h3 { margin: 0 0 8px; font-size: 24px; }
+.sheet p { margin: 0 0 18px; color: var(--muted); line-height: 1.5; }
+.sheet-actions { display: grid; gap: 10px; }
+.loader { width: 28px; height: 28px; border: 3px solid rgba(255,255,255,.14); border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite; margin: 0 auto 12px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes fade { from { opacity: 0; } }
+@keyframes rise { from { transform: translateY(30px); opacity: 0; } }
+.status-screen { text-align: center; padding: 34px 8px 16px; }
+.status-icon { width: 74px; height: 74px; margin: 0 auto 16px; display: grid; place-items: center; border-radius: 24px; font-size: 36px; background: rgba(255,255,255,.06); }
+.status-screen h2 { margin: 0; font-size: 29px; }
+.status-screen p { color: var(--muted); line-height: 1.55; }
+.skeleton-card { min-height: 560px; }
+@media (max-width: 390px) { .app-shell { padding-left: 12px; padding-right: 12px; } .screen-card { border-radius: 24px; padding: 12px; } .gift-meta h2 { font-size: 24px; } }
+
+</style>
+</head>
+<body>
+  <main id="app" class="app-shell">
+    <section class="topbar">
+      <div>
+        <div class="eyebrow">GIFTRELAYER</div>
+        <h1 id="pageTitle">Предложение</h1>
+      </div>
+      <button id="closeTop" class="icon-button" aria-label="Закрыть">×</button>
+    </section>
+
+    <section id="screen" class="screen-card skeleton-card">
+      <div class="status-pill"><span class="dot"></span><span id="statusText">Загрузка...</span></div>
+      <div class="gift-stage">
+        <img id="giftImage" alt="Telegram Gift" hidden />
+        <div id="giftFallback" class="gift-fallback">🎁</div>
+      </div>
+      <div class="gift-meta">
+        <h2 id="giftName">Загружаем подарок</h2>
+        <p id="subtitle">Проверяем предложение…</p>
+        <div id="price" class="price">—</div>
+        <div id="timer" class="timer">—</div>
+      </div>
+    </section>
+
+    <section id="actions" class="actions"></section>
+  </main>
+
+  <div id="overlay" class="overlay" hidden>
+    <div id="sheet" class="sheet" role="dialog" aria-modal="true"></div>
+  </div>
+
+  <script>
+(() => {
+  const tg = window.Telegram?.WebApp;
+  const $ = (id) => document.getElementById(id);
+  const els = {
+    screen: $('screen'), actions: $('actions'), giftImage: $('giftImage'), giftFallback: $('giftFallback'),
+    giftName: $('giftName'), subtitle: $('subtitle'), price: $('price'), timer: $('timer'),
+    statusText: $('statusText'), overlay: $('overlay'), sheet: $('sheet'), pageTitle: $('pageTitle'), closeTop: $('closeTop')
+  };
+
+  if (tg) {
+    tg.ready();
+    tg.expand();
+    try { tg.setHeaderColor('#0b1018'); tg.setBackgroundColor('#090d14'); tg.setBottomBarColor('#090d14'); } catch (_) {}
+  }
+
+  const params = new URLSearchParams(location.search);
+  const offerId = tg?.initDataUnsafe?.start_param || params.get('tgWebAppStartParam') || params.get('offer_id') || '';
+  const initData = tg?.initData || '';
+  let offer = null;
+  let timerHandle = null;
+
+  const api = async (path, options = {}) => {
+    const headers = { 'X-Telegram-Init-Data': initData, ...(options.headers || {}) };
+    const res = await fetch(path, { ...options, headers });
+    let body = {};
+    try { body = await res.json(); } catch (_) {}
+    if (!res.ok) throw Object.assign(new Error(body.error || 'Ошибка сервера'), { body, status: res.status });
+    return body;
+  };
+
+  const haptic = (type = 'light') => { try { tg?.HapticFeedback?.impactOccurred(type); } catch (_) {} };
+  const close = () => tg?.close ? tg.close() : window.close();
+  els.closeTop.addEventListener('click', close);
+
+  function button(text, cls, onClick) {
+    const b = document.createElement('button');
+    b.className = `btn ${cls}`;
+    b.textContent = text;
+    b.onclick = onClick;
+    return b;
+  }
+
+  function setActions(...buttons) {
+    els.actions.replaceChildren(...buttons);
+  }
+
+  function formatTime(total) {
+    total = Math.max(0, total | 0);
+    const h = String(Math.floor(total / 3600)).padStart(2, '0');
+    const m = String(Math.floor((total % 3600) / 60)).padStart(2, '0');
+    const s = String(total % 60).padStart(2, '0');
+    return `${h}:${m}:${s}`;
+  }
+
+  function startTimer(seconds) {
+    clearInterval(timerHandle);
+    let left = Math.max(0, seconds || 0);
+    const paint = () => {
+      els.timer.textContent = left > 0 ? `Предложение действительно ещё ${formatTime(left)}` : 'Срок предложения истёк';
+      left--;
+    };
+    paint(); timerHandle = setInterval(paint, 1000);
+  }
+
+  function showSheet(title, text, actions, loading = false) {
+    els.sheet.innerHTML = `${loading ? '<div class="loader"></div>' : ''}<h3>${title}</h3><p>${text}</p><div class="sheet-actions" id="sheetActions"></div>`;
+    const box = els.sheet.querySelector('#sheetActions');
+    (actions || []).forEach(a => box.appendChild(button(a.text, a.cls || 'btn-ghost', a.onClick)));
+    els.overlay.hidden = false;
+  }
+  function hideSheet() { els.overlay.hidden = true; }
+  els.overlay.addEventListener('click', (e) => { if (e.target === els.overlay) hideSheet(); });
+
+  async function loadGiftImage() {
+    if (!offerId || !initData) return;
+    try {
+      const res = await fetch(`/api/offers/${encodeURIComponent(offerId)}/gift-image`, { headers: { 'X-Telegram-Init-Data': initData } });
+      if (!res.ok) return;
+      const blob = await res.blob();
+      els.giftImage.src = URL.createObjectURL(blob);
+      els.giftImage.hidden = false;
+      els.giftFallback.hidden = true;
+    } catch (_) {}
+  }
+
+  function renderBase(o) {
+    offer = o;
+    els.screen.classList.remove('skeleton-card');
+    els.giftName.textContent = o.gift.name;
+    els.price.textContent = `${o.price.value} ${o.price.currency === 'звёзд' ? '⭐' : o.price.currency}`;
+    startTimer(o.seconds_left);
+  }
+
+  function statusScreen(icon, title, text, buttonText = 'Закрыть') {
+    clearInterval(timerHandle);
+    els.pageTitle.textContent = 'GiftRelayer';
+    els.screen.innerHTML = `<div class="status-screen"><div class="status-icon">${icon}</div><h2>${title}</h2><p>${text}</p></div>`;
+    setActions(button(buttonText, 'btn-primary', close));
+  }
+
+  function openBuyer() {
+    if (!offer?.creator?.link) return;
+    haptic();
+    try { tg?.openTelegramLink(offer.creator.link); }
+    catch (_) { location.href = offer.creator.link; }
+  }
+
+  async function doAccept(btn) {
+    btn.disabled = true; haptic('medium');
+    try {
+      const body = await api(`/api/offers/${encodeURIComponent(offerId)}/accept`, { method: 'POST' });
+      offer = body.offer; renderAccepted(offer);
+    } catch (e) {
+      if (e.body?.code === 'own_offer') {
+        showSheet('Нельзя принять собственное предложение', 'Этот оффер был создан вами.', [{ text: 'Закрыть', cls: 'btn-primary', onClick: close }]);
+      } else {
+        showSheet('Не удалось принять предложение', e.message, [{ text: 'Понятно', cls: 'btn-primary', onClick: hideSheet }]);
+      }
+    } finally { btn.disabled = false; }
+  }
+
+  function confirmDecline() {
+    haptic();
+    showSheet('Отклонить предложение?', 'После этого предложение станет недоступно.', [
+      { text: 'Отклонить', cls: 'btn-secondary', onClick: doDecline },
+      { text: 'Назад', cls: 'btn-ghost', onClick: hideSheet },
+    ]);
+  }
+
+  async function doDecline() {
+    hideSheet();
+    try {
+      await api(`/api/offers/${encodeURIComponent(offerId)}/decline`, { method: 'POST' });
+      haptic('medium');
+      statusScreen('❌', 'Предложение отклонено', `Вы отказались от предложения на ${offer.gift.name}. Оффер больше не активен.`);
+    } catch (e) {
+      showSheet('Не удалось отклонить', e.message, [{ text: 'Понятно', cls: 'btn-primary', onClick: hideSheet }]);
+    }
+  }
+
+  function renderActive(o) {
+    renderBase(o);
+    els.pageTitle.textContent = 'Предложение';
+    els.statusText.textContent = 'ОФФЕР АКТИВЕН';
+    els.subtitle.textContent = 'За ваш подарок предлагают';
+    const accept = button('Принять оффер', 'btn-primary', () => doAccept(accept));
+    const decline = button('Отклонить', 'btn-secondary', confirmDecline);
+    setActions(accept, decline);
+  }
+
+  function renderAccepted(o) {
+    renderBase(o);
+    els.pageTitle.textContent = 'Передача подарка';
+    els.statusText.textContent = 'ПРЕДЛОЖЕНИЕ ПРИНЯТО';
+    els.subtitle.innerHTML = 'Передайте этот подарок пользователю, который отправил предложение. После передачи вернитесь сюда и подтвердите операцию.';
+    const info = document.createElement('div');
+    info.className = 'info-box';
+    info.innerHTML = `<strong>Кому передать</strong><br>${o.creator.username ? '@' + o.creator.username : 'Покупатель из исходной сделки'}`;
+    els.screen.querySelector('.gift-meta')?.appendChild(info);
+    const transfer = button('🎁 Передать подарок', 'btn-primary', openBuyer);
+    const confirm = button('✅ Подтвердить передачу', 'btn-success', () => verifyTransfer(confirm));
+    setActions(transfer, confirm);
+  }
+
+  async function verifyTransfer(btn) {
+    btn.disabled = true; haptic('medium');
+    showSheet('Проверяем передачу…', 'Проверяем владельца подарка через доступные официальные данные Telegram.', [], true);
+    try {
+      const body = await api(`/api/offers/${encodeURIComponent(offerId)}/confirm-transfer`, { method: 'POST' });
+      hideSheet();
+      if (body.result === 'VERIFIED') {
+        statusScreen('✅', 'Подарок передан', `Передача ${offer.gift.name} успешно подтверждена. Подарок передан покупателю.`);
+      } else if (body.result === 'NOT_TRANSFERRED') {
+        showSheet('Подарок ещё не передан', `Мы проверили ${offer.gift.name} и пока видим подарок у продавца. Сначала передайте его покупателю, затем повторите проверку.`, [
+          { text: '🎁 Передать подарок', cls: 'btn-primary', onClick: () => { hideSheet(); openBuyer(); } },
+          { text: 'Попробовать снова', cls: 'btn-ghost', onClick: () => { hideSheet(); verifyTransfer(btn); } },
+        ]);
+      } else {
+        statusScreen('⏳', 'Передача отправлена на проверку', 'Автоматическая проверка этого подарка сейчас недоступна. Информация отправлена администратору на ручную проверку.');
+      }
+    } catch (e) {
+      hideSheet();
+      showSheet('Проверка не выполнена', e.message, [{ text: 'Попробовать снова', cls: 'btn-primary', onClick: () => { hideSheet(); verifyTransfer(btn); } }]);
+    } finally { btn.disabled = false; }
+  }
+
+  function renderOffer(o) {
+    if (o.action_blocked === 'OWN_OFFER') {
+      renderBase(o);
+      setActions();
+      showSheet('Нельзя принять собственное предложение', 'Этот оффер был создан вами.', [{ text: 'Закрыть', cls: 'btn-primary', onClick: close }]);
+      return;
+    }
+    if (o.action_blocked === 'NOT_RECIPIENT') {
+      statusScreen('🔒', 'Предложение недоступно', 'Этот оффер предназначен другому пользователю.');
+      return;
+    }
+    if (o.status === 'ACTIVE') return renderActive(o);
+    if (o.status === 'ACCEPTED') return renderAccepted(o);
+    if (o.status === 'DECLINED') return statusScreen('❌', 'Предложение отклонено', `Оффер на ${o.gift.name} больше не активен.`);
+    if (o.status === 'TRANSFER_PENDING') return statusScreen('⏳', 'Передача ожидает проверки', 'Информация отправлена на ручную проверку.');
+    if (o.status === 'TRANSFER_CONFIRMED') return statusScreen('✅', 'Подарок передан', `Передача ${o.gift.name} подтверждена.`);
+    if (o.status === 'EXPIRED') return statusScreen('⏱', 'Срок предложения истёк', 'Этот оффер больше недоступен.');
+    return statusScreen('🔒', 'Сделка завершена', 'Этот оффер больше не активен.');
+  }
+
+  async function init() {
+    if (!tg || !initData) {
+      return statusScreen('⚠️', 'Откройте через Telegram', 'Mini App должен быть запущен из официальной кнопки GiftRelayer внутри Telegram.');
+    }
+    if (!offerId) {
+      return statusScreen('⚠️', 'Оффер не выбран', 'Откройте Mini App кнопкой «Принять» под конкретным предложением.');
+    }
+    try {
+      const body = await api(`/api/offers/${encodeURIComponent(offerId)}`);
+      renderOffer(body.offer);
+      loadGiftImage();
+    } catch (e) {
+      statusScreen('⚠️', 'Не удалось открыть предложение', e.message || 'Попробуйте открыть оффер снова из Telegram.');
+    }
+  }
+
+  init();
+})();
+
+</script>
+</body>
+</html>
